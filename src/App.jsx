@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 const api = {
-  key: '',
+  key: '714f2cb8b2a4d94e4b7cf18939161930',
   base: 'https://api.openweathermap.org/data/2.5/'
 }
 
@@ -13,12 +13,36 @@ function App() {
   const [forecast, setForecast] = useState([])
   const [favorites, setFavorites] = useState([])
 
+
+  function getUserId() {
+    let id = localStorage.getItem('userId')
+    if (!id) {
+      id = Math.random().toString(36).slice(2) + Date.now()
+      localStorage.setItem('userId', id)
+    }
+    return id
+  }
+
+  const USER_ID = getUserId()
+
+
   useEffect(() => {
-    fetch(`${BACKEND_URL}/cities`)
+    fetch(`${BACKEND_URL}/cities?userId=${USER_ID}`)
       .then(res => res.json())
-      .then(data => setFavorites(data))
-      .catch(err => console.error(err))
-  }, [])
+      .then(data => {
+        if (Array.isArray(data)) {
+          setFavorites(data)
+        } else {
+          console.error('API error:', data)
+          setFavorites([])
+        }
+      })
+      .catch(err => {
+        console.error(err)
+        setFavorites([])
+      })
+  }, [USER_ID])
+
 
   const fetchWeather = (city) => {
     fetch(`${api.base}weather?q=${city}&units=metric&APPID=${api.key}&lang=en`)
@@ -48,25 +72,32 @@ function App() {
       const res = await fetch(`${BACKEND_URL}/cities`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ city: weather.name })
+        body: JSON.stringify({
+          city: weather.name,
+          userId: USER_ID
+        })
       })
+
       const city = await res.json()
-      setFavorites([...favorites, city])
+
+      if (city?.id) {
+        setFavorites(prev => [...prev, city])
+      }
     } catch (err) {
       console.error(err)
     }
   }
 
+
   const deleteFromFavorites = async (id) => {
     try {
-      await fetch(`${BACKEND_URL}/cities/${id}`, {
-        method: 'DELETE',
+      await fetch(`${BACKEND_URL}/cities/${id}?userId=${USER_ID}`, {
+        method: 'DELETE'
       })
 
       setFavorites(prev =>
         prev.filter(item => item.id !== id)
       )
-
     } catch (err) {
       console.error(err)
     }
@@ -141,7 +172,9 @@ function App() {
 
                 <button
                   onClick={addToFavorites}
-                  className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg shadow font-semibold">Fav</button>
+                  className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg shadow font-semibold">
+                  Fav
+                </button>
               </div>
             ) : (
               <p className="text-center text-gray-500">
