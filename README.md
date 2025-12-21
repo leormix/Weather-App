@@ -110,7 +110,7 @@ npm install
 Сервер запускается из корня проекта:
 
 ```bash
-npx nodemon server.ts
+npx nodemon server.js
 ```
 
 По умолчанию:
