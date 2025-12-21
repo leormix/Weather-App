@@ -45,6 +45,9 @@ function App() {
 
 
   const fetchWeather = (city) => {
+    setWeather({})
+    setForecast([])
+    
     fetch(`${api.base}weather?q=${city}&units=metric&APPID=${api.key}&lang=en`)
       .then(res => res.json())
       .then(data => {
